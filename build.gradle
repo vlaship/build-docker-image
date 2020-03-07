@@ -1,0 +1,50 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.9.RELEASE")
+    }
+}
+
+plugins {
+    id "com.palantir.docker" version '0.22.1'
+    id 'java'
+    id 'idea'
+    id 'org.springframework.boot' version '2.1.9.RELEASE'
+    id "io.spring.dependency-management" version "1.0.8.RELEASE"
+}
+
+// This is used as the docker image prefix (org)
+group = 'vlaship.docker'
+
+bootJar {
+    baseName = 'gradle'
+    version =  '0.1.0'
+}
+
+// tag::task[]
+task unpack(type: Copy) {
+    dependsOn bootJar
+    from(zipTree(tasks.bootJar.outputs.files.singleFile))
+    into("build/dependency")
+}
+docker {
+    name "${project.group}/${bootJar.baseName}"
+    copySpec.from(tasks.unpack.outputs).into("dependency")
+    buildArgs(['DEPENDENCY': "dependency"])
+}
+// end::task[]
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web") 
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+}
+
